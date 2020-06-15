@@ -1,0 +1,2 @@
+rootProject.name='EMRA'
+include ':app'
