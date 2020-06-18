@@ -33,6 +33,8 @@ public class RespHistory {
         private String kwhActual;
         @SerializedName("region_probability")
         private String regionProbability;
+        @SerializedName("meter_type")
+        private String meterType;
 
         public String getMode() {
             return mode;
@@ -72,6 +74,10 @@ public class RespHistory {
 
         public String getRegionProbability() {
             return regionProbability;
+        }
+
+        public String getMeterType() {
+            return meterType;
         }
     }
 

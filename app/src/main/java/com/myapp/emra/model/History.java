@@ -2,9 +2,9 @@ package com.myapp.emra.model;
 
 public class History {
 
-   private String mode, clientId, imgPath, period, date, time, croppedImgPath, kwhAutomatic, kwhActual,regionProbability;
+   private String mode, clientId, imgPath, period, date, time, croppedImgPath, kwhAutomatic, kwhActual,regionProbability, meterType;
 
-   public History(String mode, String clientId, String imgPath, String period, String date, String time, String croppedImgPath, String kwhAutomatic, String kwhActual, String regionProbability) {
+   public History(String mode, String clientId, String imgPath, String period, String date, String time, String croppedImgPath, String kwhAutomatic, String kwhActual, String regionProbability, String meterType) {
       this.mode = mode;
       this.clientId = clientId;
       this.imgPath = imgPath;
@@ -15,6 +15,7 @@ public class History {
       this.kwhAutomatic = kwhAutomatic;
       this.kwhActual = kwhActual;
       this.regionProbability = regionProbability;
+      this.meterType = meterType;
    }
 
    public String getMode() {
@@ -55,5 +56,9 @@ public class History {
 
    public String getRegionProbability() {
       return regionProbability;
+   }
+
+   public String getMeterType() {
+      return meterType;
    }
 }

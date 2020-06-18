@@ -34,7 +34,10 @@ public interface ApiConfig {
 
     @Multipart
     @POST("/api/reading/detection")
-    Call<RespImage> API_submitMeterImg(@Part MultipartBody.Part image_source_file
+    Call<RespImage> API_submitMeterImg(@Part MultipartBody.Part image_source_file,
+                                       @Part("mode") int mode,
+                                       @Part("meter_type") RequestBody meterType
+
     );
 
 
@@ -51,6 +54,7 @@ public interface ApiConfig {
                                         @Field("kwh_automatic") String kwhAutomatic,
                                         @Field("kwh_actual") String kwhActual,
                                         @Field("region_probability") String regionProbability
+
     );
 
 

@@ -22,6 +22,10 @@ public class RespImage {
     @SerializedName("region_probability")
     @Expose
     private String regionProbability;
+    @SerializedName("meter_type")
+    @Expose
+    private String meterType;
+
 //    @SerializedName("ocr_probability")
 //    @Expose
 //    private List<ObjOcrProbability> resultsClass; //array
@@ -53,5 +57,9 @@ public class RespImage {
 
     public String getRegionProbability() {
         return regionProbability;
+    }
+
+    public String getMeterType() {
+        return meterType;
     }
 }

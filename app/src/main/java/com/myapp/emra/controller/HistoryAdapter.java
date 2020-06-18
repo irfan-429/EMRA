@@ -55,6 +55,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.MyViewHo
                 String kwhAutomatic = arrayList.get(position).getKwhAutomatic();
                 String kwhActual = arrayList.get(position).getKwhActual();
                 String regionProbability = arrayList.get(position).getRegionProbability();
+                String meterType = arrayList.get(position).getMeterType();
 
                 Intent intent = new Intent(context, HistoryDetails.class);
                 intent.putExtra("mode", mode);
@@ -64,6 +65,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.MyViewHo
                 intent.putExtra("kwhAutomatic", kwhAutomatic);
                 intent.putExtra("kwhActual", kwhActual);
                 intent.putExtra("regionProbability", regionProbability);
+                intent.putExtra("meterType", meterType);
                 context.startActivity(intent);
             }
         });

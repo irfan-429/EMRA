@@ -24,17 +24,18 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.MimeTypeMap;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.myapp.emra.R;
 import com.myapp.emra.networking.response.RespCustomerDetails;
 import com.myapp.emra.networking.response.RespImage;
@@ -46,12 +47,10 @@ import com.myapp.emra.utils.LoadingDialog;
 import com.myapp.emra.utils.Storage;
 import com.myapp.emra.utils.Utilities;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -60,7 +59,7 @@ import retrofit2.Call;
 import retrofit2.Response;
 
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, RetrofitRespondListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemSelectedListener, RetrofitRespondListener {
 
     private String TAG = "===MainActivity";
     private Context context = this;
@@ -71,14 +70,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button btn_submitForm;
     private LinearLayout ll_detailsLayout, ll_submitLayout;
     private SwitchCompat sw_selectionMode;
-    private RelativeLayout rl_baseUrlLayout;
+    private RelativeLayout rl_baseUrlLayout, rl_meterTypeLayout;
     private LoadingDialog loadingDialog;
+    private Spinner sp_mode, sp_meterType;
     private Storage storage;
     boolean isBaseUrlShowing = false;
     private String str_mode, str_imgPath, str_resultImgPath, str_regionProbability;
     private boolean closeApp = true;
     private final int CAMERA_REQUEST = 0;
     private final int GALLERY_PICTURE = 1;
+    private String selectedMode = "0", selectedMeterType = null;
+    private ArrayAdapter<String> adapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -86,6 +88,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         initViews();
+        setupModes();
+        setupMeterType();
         runtimePermissions();
     }
 
@@ -111,12 +115,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ll_detailsLayout = findViewById(R.id.ll_detailsLayout);
         ll_submitLayout = findViewById(R.id.ll_submitLayout);
         rl_baseUrlLayout = findViewById(R.id.rl_baseUrlLayout);
+        rl_meterTypeLayout = findViewById(R.id.rl_meterTypeLayout);
         sw_selectionMode = findViewById(R.id.sw_selectionMode);
+        sp_mode = findViewById(R.id.sp_mode);
+        sp_meterType = findViewById(R.id.sp_meterType);
 
+        //adding listeners
         iv_sendCustomerID.setOnClickListener(this);
         iv_saveBaseURL.setOnClickListener(this);
         iv_captureMeter.setOnClickListener(this);
         btn_submitForm.setOnClickListener(this);
+
+        sp_mode.setOnItemSelectedListener(this);
+        sp_meterType.setOnItemSelectedListener(this);
 
         //get switch state
         if (storage.getImgSelection()) {
@@ -133,6 +144,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
     }
+
+    private void setupModes() {
+        List<String> list = new ArrayList<String>();
+//        list.add("none");
+        list.add("0");
+        list.add("1");
+        list.add("2");
+
+        adapter = new ArrayAdapter<String>(context, android.R.layout.simple_spinner_item, list);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sp_mode.setAdapter(adapter);
+    }
+
+
+    private void setupMeterType() {
+        List<String> list = new ArrayList<String>();
+        list.add("reading");
+        list.add("digital_reading");
+
+        adapter = new ArrayAdapter<String>(context, android.R.layout.simple_spinner_item, list);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sp_meterType.setAdapter(adapter);
+    }
+
 
     public Uri getImageUri(Context inContext, Bitmap inImage) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -159,7 +194,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         closeApp = false;
         loadingDialog.show();
 
-        Call<RespImage> apiCall = RetrofitClient.getRetrofitInstance(context).create(ApiConfig.class).API_submitMeterImg(body);
+        RequestBody meterType = null;
+        if (selectedMeterType != null) {
+            meterType = RequestBody.create(MediaType.parse("text/plain"), selectedMeterType);
+        }
+        Call<RespImage> apiCall = RetrofitClient.getRetrofitInstance(context).create(ApiConfig.class).API_submitMeterImg(body, Integer.parseInt(selectedMode), meterType);
         RetrofitClient.callRetrofit(apiCall, "METER_IMG_SUBMIT", this);
     }
 
@@ -278,15 +317,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onRetrofitFailure(String responseError, String requestName) {
         if (responseError.equalsIgnoreCase("timeout")) {
             Toast.makeText(context, "Timeout", Toast.LENGTH_SHORT).show();
-            loadingDialog.dismiss();
+        } else if (responseError.contains("Failed to connect")) {
+            Toast.makeText(context, "Failed to connect", Toast.LENGTH_SHORT).show();
         }
+
+        iv_sendCustomerID.setVisibility(View.VISIBLE);//show send btn
+        pb_sendCustomerID.setVisibility(View.GONE); //hide loader
+
+        loadingDialog.dismiss();
+
     }
 
 
     private void responseCustomerDetails(Response<?> response) {
         RespCustomerDetails respCustomerDetails = (RespCustomerDetails) response.body(); //main obj
         if (response.code() == 200) {
-            Log.e(TAG, "responseCustomerDetails: " + respCustomerDetails.getCustomerId());
             tv_meterNumber.setText(respCustomerDetails.getCustomerMeterNo());
             tv_customerName.setText(respCustomerDetails.getCustomerName());
             tv_unitUP.setText(respCustomerDetails.getCustomerUnitUP());
@@ -301,21 +346,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void responseMeterImg(Response<?> response) {
         RespImage respImage = (RespImage) response.body(); //main obj
         if (response.code() == 200) { //created
+            str_mode = respImage.getMode();
+            str_imgPath = respImage.getImgSrcFile();
+            str_resultImgPath = respImage.getResultImgPath();
+            tv_kwhAutoDetect.setText(respImage.getReadingValue());
+            str_regionProbability = respImage.getRegionProbability();
+
             String readingImg = respImage.getResultImgPath();
             if (readingImg != null) {
-                str_mode = respImage.getMode();
-                str_imgPath = respImage.getImgSrcFile();
-                str_resultImgPath = respImage.getResultImgPath();
-                tv_kwhAutoDetect.setText(respImage.getReadingValue());
-                str_regionProbability = respImage.getRegionProbability();
                 Utilities.loadImage(context, str_resultImgPath, iv_autoImg);
+                iv_autoImg.setVisibility(View.VISIBLE); //if gone
                 ll_submitLayout.setVisibility(View.VISIBLE);
-            } else
-                Toast.makeText(context, "Prediction Failed! Please take the picture straight, not angled", Toast.LENGTH_LONG).show();
+            } else {
+                if (str_mode.equals("2")) {
+                    iv_autoImg.setVisibility(View.GONE);
+                    ll_submitLayout.setVisibility(View.VISIBLE);
+
+                } else
+                    Toast.makeText(context, "Prediction Failed! Please take the picture straight, not angled", Toast.LENGTH_LONG).show();
+
+            }
         } else if (response.code() == 400)
             Toast.makeText(context, "Prediction Failed!", Toast.LENGTH_LONG).show();
 
     }
+
 
     private void responseFormSubmitted(Response<?> response) {
         RespSubmitForm respSubmitForm = (RespSubmitForm) response.body(); //main obj
@@ -342,7 +397,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onClick(DialogInterface arg0, int arg1) {
                 Intent pictureActionIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                 startActivityForResult(pictureActionIntent, GALLERY_PICTURE);
-
             }
         });
 
@@ -450,5 +504,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             closeApp = true;
         }
+    }
+
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+        switch (parent.getId()) {
+            case R.id.sp_mode: {
+                selectedMode = sp_mode.getSelectedItem().toString();
+                if (selectedMode.equals("2")) {
+                    rl_meterTypeLayout.setVisibility(View.VISIBLE);
+                    selectedMeterType = "reading"; //default
+                } else {
+                    rl_meterTypeLayout.setVisibility(View.GONE);
+                    selectedMeterType = null;
+                }
+            }
+            break;
+
+            case R.id.sp_meterType:
+                selectedMeterType = sp_meterType.getSelectedItem().toString();
+                break;
+        }
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
     }
 }

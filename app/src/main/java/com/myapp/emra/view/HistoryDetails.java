@@ -27,6 +27,7 @@ public class HistoryDetails extends AppCompatActivity {
         TextView tv_regionProbability = findViewById(R.id.histDetails_tv_regionProbability);
         TextView tv_valPredicted = findViewById(R.id.histDetails_tv_valPredicted);
         TextView tv_valActual = findViewById(R.id.histDetails_tv_valActual);
+        TextView tv_meterType= findViewById(R.id.histDetails_tv_meterType);
         AppCompatImageView iv_image = findViewById(R.id.histDetails_iv_image);
         AppCompatImageView iv_readingImage = findViewById(R.id.histDetails_iv_readingImage);
 
@@ -36,6 +37,7 @@ public class HistoryDetails extends AppCompatActivity {
         tv_regionProbability.setText(intent.getExtras().getString("regionProbability"));
         tv_valPredicted.setText(intent.getExtras().getString("kwhAutomatic"));
         tv_valActual.setText(intent.getExtras().getString("kwhActual"));
+        tv_meterType.setText(intent.getExtras().getString("meterType"));
 
         Utilities.loadImage(this, intent.getExtras().getString("imgPath"), iv_image);
         Utilities.loadImage(this,intent.getExtras().getString("croppedImgPath"), iv_readingImage);

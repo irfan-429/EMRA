@@ -265,8 +265,71 @@
                     android:text="Selection Mode"
                     />
 
+                <RelativeLayout
+                    android:layout_marginTop="@dimen/_10sdp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
 
-            <androidx.appcompat.widget.AppCompatImageView
+                    <TextView
+                        android:layout_centerVertical="true"
+                        android:textColor="@color/colorBlack"
+                        android:id="@+id/settings_tv_currentLang"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="@dimen/_12sdp"
+                        android:text="Select Mode"
+                        />
+
+
+                    <Spinner
+                        android:layout_alignParentEnd="true"
+                        android:padding="@dimen/_5sdp"
+                        android:id="@+id/sp_mode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        />
+                </RelativeLayout>
+
+                <View
+                    android:layout_marginTop="@dimen/_10sdp"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/_1sdp"
+                    android:background="@color/colorSilver" />
+
+                <RelativeLayout
+                    android:visibility="gone"
+                    android:id="@+id/rl_meterTypeLayout"
+                    android:layout_marginTop="@dimen/_10sdp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:textColor="@color/colorBlack"
+                        android:layout_centerVertical="true"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="@dimen/_12sdp"
+                        android:text="Select Meter Type"
+                        />
+
+
+                    <Spinner
+                        android:layout_alignParentEnd="true"
+                        android:padding="@dimen/_10sdp"
+                        android:id="@+id/sp_meterType"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        />
+
+                </RelativeLayout>
+
+
+
+
+
+                <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/iv_captureMeter"
                 android:layout_width="@dimen/_200sdp"
                 android:layout_height="@dimen/_200sdp"
@@ -325,6 +388,7 @@
                 android:src="@drawable/img_loading" />
 
             <LinearLayout
+                android:layout_marginTop="@dimen/_15sdp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">

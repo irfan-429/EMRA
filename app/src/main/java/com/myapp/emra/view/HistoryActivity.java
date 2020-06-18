@@ -93,8 +93,9 @@ public class HistoryActivity extends AppCompatActivity implements RetrofitRespon
                     String kwhAutomatic = results.getKwhAutomatic();
                     String kwhActual = results.getKwhActual();
                     String regionProbability = results.getRegionProbability();
+                    String meterType = results.getMeterType();
 
-                    arrayList.add(new History(mode, clientId, imgPath, period, date, time, croppedImgPath, kwhAutomatic, kwhActual,regionProbability));
+                    arrayList.add(new History(mode, clientId, imgPath, period, date, time, croppedImgPath, kwhAutomatic, kwhActual,regionProbability, meterType));
                 }
             }
 
