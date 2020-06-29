@@ -11,7 +11,6 @@ import com.myapp.emra.R;
 
 public class LoadingDialog extends Dialog {
 
-
     Activity activity;
 
     public LoadingDialog(Context context) {

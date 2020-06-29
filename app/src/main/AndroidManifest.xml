@@ -17,9 +17,14 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
         tools:ignore="UnusedAttribute">
-        <activity android:name=".view.HistoryDetails"></activity>
-        <activity android:name=".view.HistoryActivity" />
-        <activity android:name=".view.MainActivity">
+        <activity android:name=".view.SettingsActivity"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".view.HistoryDetails"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".view.HistoryActivity"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".view.MainActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

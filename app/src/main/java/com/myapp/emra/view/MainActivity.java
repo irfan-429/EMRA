@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageView;
-import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
@@ -19,6 +18,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -27,7 +27,6 @@ import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -69,7 +68,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ProgressBar pb_sendCustomerID;
     private Button btn_submitForm;
     private LinearLayout ll_detailsLayout, ll_submitLayout;
-    private SwitchCompat sw_selectionMode;
     private RelativeLayout rl_baseUrlLayout, rl_meterTypeLayout;
     private LoadingDialog loadingDialog;
     private Spinner sp_mode, sp_meterType;
@@ -99,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         storage = new Storage(context);
         et_customerID = findViewById(R.id.et_customerID);
         et_kwhManual = findViewById(R.id.et_kwhManual);
-        et_baseURL = findViewById(R.id.et_baseURL);
+//        et_baseURL = findViewById(R.id.et_baseURL);
         tv_meterNumber = findViewById(R.id.tv_meterNumber);
         tv_customerName = findViewById(R.id.tv_customerName);
         tv_unitUP = findViewById(R.id.tv_unitUP);
@@ -109,40 +107,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         iv_sendCustomerID = findViewById(R.id.iv_sendCustomerID);
         iv_captureMeter = findViewById(R.id.iv_captureMeter);
         iv_autoImg = findViewById(R.id.iv_autoImg);
-        iv_saveBaseURL = findViewById(R.id.iv_saveBaseURL);
+//        iv_saveBaseURL = findViewById(R.id.iv_saveBaseURL);
         pb_sendCustomerID = findViewById(R.id.pb_sendCustomerID);
         btn_submitForm = findViewById(R.id.btn_submitForm);
         ll_detailsLayout = findViewById(R.id.ll_detailsLayout);
         ll_submitLayout = findViewById(R.id.ll_submitLayout);
-        rl_baseUrlLayout = findViewById(R.id.rl_baseUrlLayout);
+//        rl_baseUrlLayout = findViewById(R.id.rl_baseUrlLayout);
         rl_meterTypeLayout = findViewById(R.id.rl_meterTypeLayout);
-        sw_selectionMode = findViewById(R.id.sw_selectionMode);
         sp_mode = findViewById(R.id.sp_mode);
         sp_meterType = findViewById(R.id.sp_meterType);
 
         //adding listeners
         iv_sendCustomerID.setOnClickListener(this);
-        iv_saveBaseURL.setOnClickListener(this);
+//        iv_saveBaseURL.setOnClickListener(this);
         iv_captureMeter.setOnClickListener(this);
         btn_submitForm.setOnClickListener(this);
 
         sp_mode.setOnItemSelectedListener(this);
         sp_meterType.setOnItemSelectedListener(this);
 
-        //get switch state
-        if (storage.getImgSelection()) {
-            sw_selectionMode.setChecked(true);
-        } else sw_selectionMode.setChecked(false);
-
-
-        sw_selectionMode.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    storage.setImgSelection(true);
-                } else storage.setImgSelection(false);
-            }
-        });
     }
 
     private void setupModes() {
@@ -214,15 +197,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (itemId == R.id.action_history) {
             startActivity(new Intent(context, HistoryActivity.class));
             return true;
-        } else if (itemId == R.id.action_updateURL) {
-            if (isBaseUrlShowing) {
-                rl_baseUrlLayout.setVisibility(View.GONE);
-                isBaseUrlShowing = false;
-            } else {
-                rl_baseUrlLayout.setVisibility(View.VISIBLE);
-                isBaseUrlShowing = true;
-                et_baseURL.setText(storage.getBaseURL());
-            }
+        } else if (itemId == R.id.action_settings) {
+            startActivity(new Intent(context, SettingsActivity.class));
+
+
+//            if (isBaseUrlShowing) {
+//                rl_baseUrlLayout.setVisibility(View.GONE);
+//                isBaseUrlShowing = false;
+//            } else {
+//                rl_baseUrlLayout.setVisibility(View.VISIBLE);
+//                isBaseUrlShowing = true;
+//                et_baseURL.setText(storage.getBaseURL());
+//            }
             return true;
         }
 
@@ -259,11 +245,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
             break;
 
-            case R.id.iv_saveBaseURL: {
-                Toast.makeText(context, "Saved!", Toast.LENGTH_SHORT).show();
-                storage.saveBaseURL(et_baseURL.getText().toString().trim());
-            }
-            break;
+//            case R.id.iv_saveBaseURL: {
+//                Toast.makeText(context, "Saved!", Toast.LENGTH_SHORT).show();
+//                storage.saveBaseURL(et_baseURL.getText().toString().trim());
+//            }
+//            break;
         }
     }
 
@@ -489,8 +475,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED
                     && grantResults[1] == PackageManager.PERMISSION_GRANTED
             ) {
+
+                askDialogIP();
+
             } else runtimePermissions();
         }
+    }
+
+    private void askDialogIP() {
+        final EditText editText = new EditText(this);
+//        editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+        editText.setHint("x.x.x.x:xxxx");
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle("IP Address (Optional)")
+                .setCancelable(false)
+                .setView(editText)
+                .setPositiveButton("Add", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Toast.makeText(context, "Saved!", Toast.LENGTH_SHORT).show();
+                        storage.saveBaseURL(editText.getText().toString().trim());
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .create();
+        dialog.show();
     }
 
     @Override

@@ -6,45 +6,45 @@
     android:orientation="vertical">
 
 
-    <RelativeLayout
-        android:id="@+id/rl_baseUrlLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/_20sdp"
-        android:layout_marginTop="@dimen/_10sdp"
-        android:visibility="gone">
+<!--    <RelativeLayout-->
+<!--        android:id="@+id/rl_baseUrlLayout"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginLeft="@dimen/_20sdp"-->
+<!--        android:layout_marginTop="@dimen/_10sdp"-->
+<!--        android:visibility="visible">-->
 
-        <EditText
-            android:id="@+id/et_baseURL"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:layout_marginTop="@dimen/_5sdp"
-            android:layout_marginBottom="@dimen/_5sdp"
-            android:layout_toStartOf="@+id/iv_saveBaseURL"
-            android:layout_toLeftOf="@+id/iv_saveBaseURL"
-            android:digits="1234567890:."
-            android:ems="10"
-            android:hint="x.x.x.x:xxxx"
-            android:imeOptions="actionDone"
-            android:inputType="text"
-            android:maxLines="1"
-            android:textColor="@color/colorBlack"
-            android:textSize="@dimen/_16sdp" />
+<!--        <EditText-->
+<!--            android:id="@+id/et_baseURL"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_centerInParent="true"-->
+<!--            android:layout_marginTop="@dimen/_5sdp"-->
+<!--            android:layout_marginBottom="@dimen/_5sdp"-->
+<!--            android:layout_toStartOf="@+id/iv_saveBaseURL"-->
+<!--            android:layout_toLeftOf="@+id/iv_saveBaseURL"-->
+<!--            android:digits="1234567890:."-->
+<!--            android:ems="10"-->
+<!--            android:hint="x.x.x.x:xxxx"-->
+<!--            android:imeOptions="actionDone"-->
+<!--            android:inputType="text"-->
+<!--            android:maxLines="1"-->
+<!--            android:textColor="@color/colorBlack"-->
+<!--            android:textSize="@dimen/_16sdp" />-->
 
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/iv_saveBaseURL"
-            android:layout_width="@dimen/_50sdp"
-            android:layout_height="@dimen/_50sdp"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentRight="true"
-            android:padding="@dimen/_15sdp"
-            android:scaleType="fitXY"
-            android:src="@drawable/ic_save"
-            android:tint="@color/colorPrimary" />
+<!--        <androidx.appcompat.widget.AppCompatImageView-->
+<!--            android:id="@+id/iv_saveBaseURL"-->
+<!--            android:layout_width="@dimen/_50sdp"-->
+<!--            android:layout_height="@dimen/_50sdp"-->
+<!--            android:layout_alignParentEnd="true"-->
+<!--            android:layout_alignParentRight="true"-->
+<!--            android:padding="@dimen/_15sdp"-->
+<!--            android:scaleType="fitXY"-->
+<!--            android:src="@drawable/ic_save"-->
+<!--            android:tint="@color/colorPrimary" />-->
 
-    </RelativeLayout>
+<!--    </RelativeLayout>-->
 
 
     <RelativeLayout
@@ -257,13 +257,6 @@
                     android:textStyle="bold" />
 
             </LinearLayout>
-
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/sw_selectionMode"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Selection Mode"
-                    />
 
                 <RelativeLayout
                     android:layout_marginTop="@dimen/_10sdp"
