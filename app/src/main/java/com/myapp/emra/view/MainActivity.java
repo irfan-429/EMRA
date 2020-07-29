@@ -8,17 +8,22 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.InputType;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -35,6 +40,19 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkError;
+import com.android.volley.NoConnectionError;
+import com.android.volley.ParseError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.ServerError;
+import com.android.volley.TimeoutError;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.myapp.emra.MultipartRequest;
 import com.myapp.emra.R;
 import com.myapp.emra.networking.response.RespCustomerDetails;
 import com.myapp.emra.networking.response.RespImage;
@@ -46,10 +64,19 @@ import com.myapp.emra.utils.LoadingDialog;
 import com.myapp.emra.utils.Storage;
 import com.myapp.emra.utils.Utilities;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -57,9 +84,12 @@ import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Response;
 
+import static android.provider.ContactsContract.CommonDataKinds.Website.URL;
+
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemSelectedListener, RetrofitRespondListener {
 
+    private static final int MAX_IMAGE_DIMENSION = 1024;
     private String TAG = "===MainActivity";
     private Context context = this;
     private EditText et_customerID, et_kwhManual, et_baseURL;
@@ -145,6 +175,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         List<String> list = new ArrayList<String>();
         list.add("reading");
         list.add("digital_reading");
+        list.add("digital_reading_2");
+
 
         adapter = new ArrayAdapter<String>(context, android.R.layout.simple_spinner_item, list);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -181,6 +213,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (selectedMeterType != null) {
             meterType = RequestBody.create(MediaType.parse("text/plain"), selectedMeterType);
         }
+        Log.e(TAG, "submitMeterImg: " + selectedMeterType);
         Call<RespImage> apiCall = RetrofitClient.getRetrofitInstance(context).create(ApiConfig.class).API_submitMeterImg(body, Integer.parseInt(selectedMode), meterType);
         RetrofitClient.callRetrofit(apiCall, "METER_IMG_SUBMIT", this);
     }
@@ -425,13 +458,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (resultCode == RESULT_OK) {
                     Bitmap photo = (Bitmap) data.getExtras().get("data");
                     iv_captureMeter.setPadding(0, 0, 0, 0);
-                    iv_captureMeter.setImageBitmap(photo);
-
+//                    iv_captureMeter.setImageBitmap(photo);
                     Uri tempUri = getImageUri(context, photo);
+
+                    /****************start img ori************************/
+                    if (android.os.Build.MANUFACTURER.equalsIgnoreCase("Google")) {
+                        try {
+                            Bitmap bitmap = scaleImage(this, tempUri);
+                            iv_captureMeter.setImageBitmap(bitmap);
+                            tempUri = getImageUri(context, bitmap);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        iv_captureMeter.setImageBitmap(photo);
+
+                    }
+                    /*************** end img ore *************************/
 
                     File file = new File(getRealPathFromURI(tempUri));
                     RequestBody requestFile = RequestBody.create(MediaType.parse("multipart/form-data"), file);
-
                     long currentTS = System.currentTimeMillis();
                     String fileName = Utilities.formatDateTimeFromTS(currentTS, "yyyyMM") + "_" +
                             et_customerID.getText().toString().trim() + "_" +
@@ -440,14 +486,124 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             + tv_unitUP.getText().toString() + "_" + tv_tarif.getText().toString() + "." +
                             getFileExtension(tempUri);
 
-                    Log.d(TAG, "onActivityResult: " + fileName);
-                    MultipartBody.Part body = MultipartBody.Part.createFormData("image", fileName, requestFile);
+                    MultipartBody.Part body = MultipartBody.Part.createFormData("image_source_file", fileName, requestFile);
                     submitMeterImg(body);
+
+//                    volleyRqst(photo);
+//                    uploadImage(photo);
                 }
                 break;
         }
 
     }
+
+    private void uploadImage(Bitmap bitmap) {
+        JSONObject jsonObject;
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+        String encodedImage = Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT);
+        jsonObject = new JSONObject();
+        try {
+            jsonObject.put("mode", selectedMode);
+            jsonObject.put("meter_type", selectedMeterType);
+            jsonObject.put("image_source_file", encodedImage);
+            Log.e(TAG, "uploadImage: "+ encodedImage );
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, "http://46.17.97.55:8000/api/reading/detection", jsonObject,
+                new com.android.volley.Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.e(TAG, "onResponse: " + response);
+
+                    }
+
+                }, new com.android.volley.Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                if (error.networkResponse.data != null) {
+                    try {
+                        String body = new String(error.networkResponse.data, "UTF-8");
+                        Log.e(TAG, "onErrorResponse: " + body);
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+        }) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("Content-Type", "multipart/form-data");
+                return params;
+            }
+
+        };
+
+        RequestQueue rQueue = Volley.newRequestQueue(MainActivity.this);
+        rQueue.add(jsonObjectRequest);
+
+    }
+
+    private void volleyRqst(Bitmap bitmap) {
+        //converting image to base64 string
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] imageBytes = baos.toByteArray();
+        final String imageString = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+
+        //sending image to server
+        StringRequest request = new StringRequest(Request.Method.POST, "http://46.17.97.55:8000/api/reading/detection", new com.android.volley.Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Toast.makeText(context, "" + response, Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "onResponse: " + response);
+
+            }
+        }, new com.android.volley.Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e(TAG, "onErrorResponse: " + error);
+                Toast.makeText(context, "" + error, Toast.LENGTH_SHORT).show();
+
+                if (error.networkResponse.data != null) {
+                    try {
+                        String body = new String(error.networkResponse.data, "UTF-8");
+                        Log.e(TAG, "onErrorResponse: " + body);
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+        }) {
+            //            //adding parameters to send
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> parameters = new HashMap<String, String>();
+                parameters.put("image_source_file", imageString);
+                parameters.put("meter_type", selectedMeterType);
+                parameters.put("mode", selectedMode);
+
+                return parameters;
+            }
+
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("Content-Type", "multipart/form-data");
+                return params;
+            }
+        };
+
+        RequestQueue rQueue = Volley.newRequestQueue(MainActivity.this);
+        rQueue.add(request);
+
+    }
+
 
     private String getFileExtension(Uri uri) {
         ContentResolver contentResolver = getContentResolver();
@@ -542,4 +698,83 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onNothingSelected(AdapterView<?> parent) {
 
     }
+
+    public static Bitmap scaleImage(Context context, Uri photoUri) throws IOException {
+        InputStream is = context.getContentResolver().openInputStream(photoUri);
+        BitmapFactory.Options dbo = new BitmapFactory.Options();
+        dbo.inJustDecodeBounds = true;
+        BitmapFactory.decodeStream(is, null, dbo);
+        is.close();
+
+        int rotatedWidth, rotatedHeight;
+        int orientation = getOrientation(context, photoUri);
+        Log.e("===>", "scaleImage: " + orientation);
+
+        if (orientation == 90 || orientation == 270) {
+            rotatedWidth = dbo.outHeight;
+            rotatedHeight = dbo.outWidth;
+        } else {
+            rotatedWidth = dbo.outWidth;
+            rotatedHeight = dbo.outHeight;
+        }
+
+        Bitmap srcBitmap;
+        is = context.getContentResolver().openInputStream(photoUri);
+        if (rotatedWidth > MAX_IMAGE_DIMENSION || rotatedHeight > MAX_IMAGE_DIMENSION) {
+            float widthRatio = ((float) rotatedWidth) / ((float) MAX_IMAGE_DIMENSION);
+            float heightRatio = ((float) rotatedHeight) / ((float) MAX_IMAGE_DIMENSION);
+            float maxRatio = Math.max(widthRatio, heightRatio);
+
+            // Create the bitmap from file
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inSampleSize = (int) maxRatio;
+            srcBitmap = BitmapFactory.decodeStream(is, null, options);
+        } else {
+            srcBitmap = BitmapFactory.decodeStream(is);
+        }
+        is.close();
+
+        /*
+         * if the orientation is not 0 (or -1, which means we don't know), we
+         * have to do a rotation.
+         */
+        if (orientation > 0) {
+            Matrix matrix = new Matrix();
+            matrix.postRotate(orientation);
+
+            srcBitmap = Bitmap.createBitmap(srcBitmap, 0, 0, srcBitmap.getWidth(),
+                    srcBitmap.getHeight(), matrix, true);
+        } else if (orientation == 0) {
+            Matrix matrix = new Matrix();
+            matrix.postRotate(90);
+
+            srcBitmap = Bitmap.createBitmap(srcBitmap, 0, 0, srcBitmap.getWidth(),
+                    srcBitmap.getHeight(), matrix, true);
+        }
+
+        String type = context.getContentResolver().getType(photoUri);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        if (type.equals("image/png")) {
+            srcBitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
+        } else if (type.equals("image/jpg") || type.equals("image/jpeg")) {
+            srcBitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        }
+        byte[] bMapArray = baos.toByteArray();
+        baos.close();
+        return BitmapFactory.decodeByteArray(bMapArray, 0, bMapArray.length);
+    }
+
+    public static int getOrientation(Context context, Uri photoUri) {
+        /* it's on the external media. */
+        Cursor cursor = context.getContentResolver().query(photoUri,
+                new String[]{MediaStore.Images.ImageColumns.ORIENTATION}, null, null, null);
+
+        if (cursor.getCount() != 1) {
+            return -1;
+        }
+
+        cursor.moveToFirst();
+        return cursor.getInt(0);
+    }
+
 }
